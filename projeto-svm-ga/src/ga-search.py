@@ -120,9 +120,11 @@ class GeneticSearchSVM:
         return best, best_acc
 
 if __name__ == "__main__":
-    from data import load_dataset
 
-    X, y = load_dataset()
+    from sklearn.datasets import load_iris    
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
 
     ga = GeneticSearchSVM(X, y, pop_size=20, generations=10)
     best_params, best_acc = ga.run()
@@ -130,3 +132,7 @@ if __name__ == "__main__":
     print("\nMelhores parâmetros encontrados pelo GA:")
     print(best_params)
     print("Acurácia:", best_acc)
+
+    #=================== VIZUALIZATION ===================
+
+
