@@ -1,0 +1,24 @@
+COBERTURA DE TESTES - pytest-cov
+
+Comando utilizado: python3 -m pytest test_ga_search.py --cov=. --cov-report=term --cov-report=html --cov-report=json --no-header -q
+
+==================================
+
+Arquivo               Linhas  Perdidas  Cobertura
+--------------------------------------------------
+data.py                    0         0       100%
+evaluation.py              0         0       100%
+ga-search.py              80         7        91%
+svm-grid.py               18        18         0%
+test_ga_search.py        152         1        99%
+utils.py                   0         0       100%
+--------------------------------------------------
+TOTAL                    250        26        90%
+
+Testes Executados: 15/15 aprovados (100%)
+Data: 2025-11-22
+
+Linhas não cobertas em ga-search.py:
+- Linhas 123, 125, 127, 128, 130, 131, 132 (bloco if __name__ == "__main__")
+
+Cobertura do código principal: 91%
