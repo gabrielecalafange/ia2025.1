@@ -1,9 +1,9 @@
 import random
+import math
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-
 
 class GeneticSearchSVM:
     def __init__(
@@ -11,9 +11,7 @@ class GeneticSearchSVM:
         X,
         y,
         pop_size=20,
-        generations=15,
-        c_range=(0.1, 1000),
-        gamma_range=(0.0001, 1),
+        generations=10,
         mutation_rate=0.1,
         crossover_rate=0.8,
         test_size=0.2,
@@ -23,25 +21,26 @@ class GeneticSearchSVM:
         self.y = y
         self.pop_size = pop_size
         self.generations = generations
-        self.c_range = c_range
-        self.gamma_range = gamma_range
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
         self.random_state = random_state
+
+        self.C_low, self.C_high = 0.1, 100
+        self.gamma_low, self.gamma_high = 0.001, 1
 
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=test_size, random_state=random_state
         )
 
-    def random_param(self, r):
-        return random.uniform(r[0], r[1])
+    def random_log_param(self, low, high):
+        return 10 ** random.uniform(math.log10(low), math.log10(high))
 
     def initialize_population(self):
         population = []
         for _ in range(self.pop_size):
             individual = {
-                "C": self.random_param(self.c_range),
-                "gamma": self.random_param(self.gamma_range)
+                "C": self.random_log_param(self.C_low, self.C_high),
+                "gamma": self.random_log_param(self.gamma_low, self.gamma_high)
             }
             population.append(individual)
         return population
@@ -80,9 +79,9 @@ class GeneticSearchSVM:
 
     def mutate(self, individual):
         if random.random() < self.mutation_rate:
-            individual["C"] = self.random_param(self.c_range)
+            individual["C"] = self.random_log_param(self.C_low, self.C_high)
         if random.random() < self.mutation_rate:
-            individual["gamma"] = self.random_param(self.gamma_range)
+            individual["gamma"] = self.random_log_param(self.gamma_low, self.gamma_high)
         return individual
 
     def run(self):
@@ -119,12 +118,11 @@ class GeneticSearchSVM:
 
         return best, best_acc
 
-if __name__ == "__main__":
 
-    from sklearn.datasets import load_iris    
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
+if __name__ == "__main__":
+    from data import load_dataset
+
+    X, y = load_dataset()
 
     ga = GeneticSearchSVM(X, y, pop_size=20, generations=10)
     best_params, best_acc = ga.run()
@@ -132,7 +130,3 @@ if __name__ == "__main__":
     print("\nMelhores parâmetros encontrados pelo GA:")
     print(best_params)
     print("Acurácia:", best_acc)
-
-    #=================== VIZUALIZATION ===================
-
-
