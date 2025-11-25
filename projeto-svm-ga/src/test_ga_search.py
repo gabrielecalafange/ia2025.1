@@ -6,7 +6,7 @@ import importlib.util
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-ga_search_path = os.path.join(current_dir, "ga-search.py")
+ga_search_path = os.path.join(current_dir, "ga_search.py")
 
 spec = importlib.util.spec_from_file_location("ga_search", ga_search_path)
 ga_search_module = importlib.util.module_from_spec(spec)
