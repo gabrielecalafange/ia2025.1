@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import time
 
 class GeneticSearchSVM:
     def __init__(
@@ -86,13 +88,19 @@ class GeneticSearchSVM:
 
     def run(self):
         population = self.initialize_population()
+        generations_C = []
+        generations_gamma = []
 
         for gen in range(self.generations):
             fitness_scores = [self.fitness(ind) for ind in population]
-            print(f"Geração {gen + 1}/{self.generations} | Melhor accuracy: {max(fitness_scores):.4f}")
+            best = population[np.argmax(fitness_scores)]
+            print(f"Geração {gen + 1}/{self.generations} | 'C' atual: {best['C']} | 'Gamma' atual: {best['gamma']} | Melhor accuracy: {max(fitness_scores):.4f}")
+            
+            generations_C.append(best['C'])
+            generations_gamma.append(best['gamma'])
 
             selected = self.selection(population, fitness_scores)
-
+            
             next_population = []
             for i in range(0, self.pop_size, 2):
                 parent1 = selected[i]
@@ -116,7 +124,7 @@ class GeneticSearchSVM:
         print("Melhor gamma:", best["gamma"])
         print("Acurácia:", best_acc)
 
-        return best, best_acc
+        return best, best_acc, generations_C, generations_gamma
 
 
 if __name__ == "__main__":
@@ -125,8 +133,34 @@ if __name__ == "__main__":
     X, y = load_dataset()
 
     ga = GeneticSearchSVM(X, y, pop_size=20, generations=10)
-    best_params, best_acc = ga.run()
+
+    start_time = time.time()
+    best_params, best_acc, generations_C, generations_gamma  = ga.run()
+    end_time = time.time()
+    finish_time = end_time - start_time
 
     print("\nMelhores parâmetros encontrados pelo GA:")
     print(best_params)
     print("Acurácia:", best_acc)
+    print(f"Tempo de execução: {end_time - start_time:.2f}s")
+
+    generations = range(len(generations_C))
+
+    plt.figure(figsize=(8, 4))
+    plt.plot(generations, generations_C, marker='o')
+    plt.title("C value over generations")
+    plt.xlabel("Generation")
+    plt.ylabel("C")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("1D-plot-C.png")
+
+    plt.figure(figsize=(8, 4))
+    plt.plot(generations, generations_gamma, marker='o')
+    plt.title("gamma value over generations")
+    plt.xlabel("Generation")
+    plt.ylabel("gamma")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("1D-plot-gamma.png")
+

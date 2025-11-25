@@ -1,0 +1,3 @@
+Os gráficos gerados do GA confirmam que, conforme as gerações passam, mais próximo o algoritmo genético
+se aproxima do melhor valor tanto para C, quanto para gamma.
+É notável, também, que o tempo de execução do algoritmo genético é bem maior em comparação ao grid-search.

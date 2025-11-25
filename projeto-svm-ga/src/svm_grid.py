@@ -4,6 +4,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
+import time
 
 #================= UTILITY CLASS FOR THE HEATMAP ================= 
 import numpy as np
@@ -33,6 +34,8 @@ y_2d -= 1
 
 #================= TRAIN CLASSIFIER =============
 scaler = StandardScaler()
+
+start_time = time.time()
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
 
@@ -47,7 +50,8 @@ grid.fit(X, y)
 
 print("Best parameters:", grid.best_params_)
 print("Best CV score: %0.2f" % grid.best_score_)
-
+end_time = time.time()
+print(f"Execution time: {end_time - start_time:.2f}s")
 #================== VIZUALIZATION =================
 C_2d_range = [1e-2, 1, 1e2]
 gamma_2d_range = [1e-1, 1, 1e1]
