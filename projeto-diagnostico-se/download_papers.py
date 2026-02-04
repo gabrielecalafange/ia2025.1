@@ -1,65 +1,65 @@
-from scholarly import scholarly
 import requests
 import re
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import os
 import time
 
+TERMO_BUSCA = 'Diagnostic of viral pneumonia'
+LIMITE = 20
+PASTA_DESTINO = "papers_pneumonia"
 
-# Busca por um tópico
-search_query = scholarly.search_pubs('Diagnostic of viral pneumonia')
+if not os.path.exists(PASTA_DESTINO):
+    os.makedirs(PASTA_DESTINO)
 
-# 3. Headers para fingir ser um navegador
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
-
-count = 0
-for i in search_query:  
-
-    # Limita a 50 downloads
-    if count >= 50:
-        break
-
-    first_result = next(search_query)
-
-    title = first_result['bib']['title']
-    url = first_result.get('eprint_url') or first_result.get('pub_url')
-
-    # 2. Limpar o título para ser um nome de arquivo válido
-    filename = re.sub(r'[\\/*?:"<>|]', "", title) + ".pdf"
-
-    print(f"Tentando baixar: {title}")
-    print(f"URL: {url}")
+def buscar_crossref(query, limit=50):
+    # API da Crossref não precisa de chave, mas identificar seu email ajuda na prioridade
+    url = f"https://api.crossref.org/works?query={query}&rows={limit}"
+    headers = {"User-Agent": "ramoni.negereiros (mailto:ramoni.reus.barros.negreiros@ccc.ufcg.edu.br)"}
     
-    url = i.get('eprint_url') or i.get('pub_url')
-    filename = re.sub(r'[\\/*?:"<>|]', "", i['bib']['title']) + ".pdf"
-    try:
-        response = requests.get(url, headers=headers, timeout=15)
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()['message']['items']
+    return []
 
-        response = requests.get(url, headers=headers)
-        response.raise_for_status() # Verifica se houve erro no download
+def baixar_artigo(url_lista, nome_arquivo):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    for url in url_lista:
+        try:
+            res = requests.get(url, headers=headers, timeout=15)
+            if 'application/pdf' in res.headers.get('Content-Type', '').lower():
+                with open(nome_arquivo, "wb") as f:
+                    f.write(res.content)
+                return True
+        except:
+            continue
+    return False
 
-        
-        with open(filename, "wb") as f:
-            f.write(response.content)
-            print("Download concluído com sucesso!")
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
-        pdf_link = None
-        for link in soup.find_all('a', href=True):
-            if '.pdf' in link['href'].lower() or 'download' in link.get('title', '').lower():
-                pdf_link = urljoin(url, link['href'])
-                break
+# --- Execução ---
+artigos = buscar_crossref(TERMO_BUSCA, LIMITE)
+print(f"Encontrados {len(artigos)} registros na Crossref.")
 
-            if pdf_link:
-                response = requests.get(pdf_link, headers=headers, timeout=15)
-                with open(filename, "wb") as f:
-                    f.write(response.content)
-                    print(f"Sucesso! Arquivo salvo como: {filename}")
-            else:
-                print("Não foi possível encontrar um link PDF na página.")
-                break
+baixados = 0
+for item in artigos:
+    if baixados >= LIMITE: break
     
-    except Exception as e:
-        print(f"Falha ao baixar o arquivo: {e}")
+    titulo = item.get('title', ['Sem Titulo'])[0]
+    # A Crossref fornece o link da editora (resource) e links diretos (link)
+    links = []
+    if 'link' in item:
+        links = [l['URL'] for l in item['link'] if l['content-type'] == 'application/pdf']
+    if 'URL' in item:
+        links.append(item['URL'])
+
+    clean_title = re.sub(r'[\\/*?:"<>|]', "", titulo)[:80]
+    caminho = os.path.join(PASTA_DESTINO, f"{clean_title}.pdf")
+
+    print(f"[{baixados+1}] Tentando: {titulo[:50]}...")
+    
+    if baixar_artigo(links, caminho):
+        print("   ✅ PDF salvo!")
+        baixados += 1
+    else:
+        print("   ❌ PDF não disponível ou pago.")
+    
+    time.sleep(1) # Delay mínimo, Crossref é generosa
+
+print(f"\nConcluído! Total de PDFs baixados: {baixados}")
