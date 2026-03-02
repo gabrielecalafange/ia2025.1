@@ -21,8 +21,7 @@ colunas_exames <- c(
 )
 
 df_final <- df %>%
-  select(any_of(c("Patient ID", "SARS-Cov-2 exam result", "Influenza A, rapid test", "Influenza B, rapid test", colunas_exames))) %>%
-  slice(1:1000)
+  select(any_of(c("Patient ID", "SARS-Cov-2 exam result", "Influenza A, rapid test", "Influenza B, rapid test", colunas_exames)))
 
 cat("Processamento concluído. Registros capturados:", nrow(df_final), "\n")
 
