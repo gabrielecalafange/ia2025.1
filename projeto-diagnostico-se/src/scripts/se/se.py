@@ -269,14 +269,33 @@ def classe_real(row):
 
 
 def sistema_especialista(row):
+
+    # =========================
+    # Base de conhecimento
+    # =========================
+
+    """
+    TODOS OS VALORES P/ OS LIMIARES ABAIXO ESTÃO NORMALIZADOS (O STD ESTÁ NO QUOCIENTE)
+    """
+    # COVID-19
+    MCHC_ALTO = 0.334482 / 1.000832 # 334,482 g/L
+    LDH_ALTO = 0.0075 / 1.004988 # 7,5 µkat/L
+    PROTEINA_C_ALTA = 0.0001 / 1.000990 # 10 mg/dL
+
+    #TO DO - Influenza tipo A e Influenza tipo B
+
+    
     score_covid = 0
     score_flu_a = 0
     score_flu_b = 0
 
-    if row["Lactic Dehydrogenase"] > 0.5:
+    if row["Lactic Dehydrogenase"] > LDH_ALTO:
         score_covid += 1
-    if row["Proteina C reativa mg/dL"] > 0.5:
+    if row["Proteina C reativa mg/dL"] > PROTEINA_C_ALTA:
         score_covid += 1
+    if row["Mean corpuscular hemoglobin concentration (MCHC)"] > MCHC_ALTO:
+        score_covid += 2
+    
     if row["Neutrophils"] > 0.5:
         score_covid += 1
 
@@ -290,7 +309,7 @@ def sistema_especialista(row):
     if row["Red blood Cells"] < -0.5:
         score_flu_b += 1
 
-    if score_covid >= 2:
+    if score_covid >= 3:
         return "COVID-19"
     elif score_flu_a >= 2:
         return "Influenza A"
