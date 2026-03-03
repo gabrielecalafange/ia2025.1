@@ -273,31 +273,67 @@ def sistema_especialista(row):
     score_flu_a = 0
     score_flu_b = 0
 
-    if row["Lactic Dehydrogenase"] > 0.5:
-        score_covid += 1
-    if row["Proteina C reativa mg/dL"] > 0.5:
-        score_covid += 1
-    if row["Neutrophils"] > 0.5:
-        score_covid += 1
+    limiar_covid_ldh = 0.5
+    limiar_covid_pcr = 0.5
+    limiar_covid_neutrophils = 0.5
+    
+    limiar_flua_leuko = -0.5
+    limiar_flua_lympho = -0.5
+    limiar_flua_platelets = -0.5
+    
+    limiar_flub_mono = 0.5
+    limiar_flub_rbc = -0.5
 
-    if row["Leukocytes"] < -0.5:
-        score_flu_a += 1
-    if row["Lymphocytes"] < -0.5:
-        score_flu_a += 1
+    peso_padrao = 1.0
+    peso_forte = 1.5 
 
-    if row["Monocytes"] > 0.5:
-        score_flu_b += 1
-    if row["Red blood Cells"] < -0.5:
-        score_flu_b += 1
+    if row["Lactic Dehydrogenase"] > limiar_covid_ldh:
+        score_covid += peso_padrao
+    if row["Proteina C reativa mg/dL"] > limiar_covid_pcr:
+        score_covid += peso_padrao
+    if row["Neutrophils"] > limiar_covid_neutrophils:
+        score_covid += peso_padrao
 
-    if score_covid >= 2:
+    if row["Leukocytes"] < limiar_flua_leuko:
+        score_flu_a += peso_padrao
+    if row["Lymphocytes"] < limiar_flua_lympho:
+        score_flu_a += peso_padrao
+    if row["Platelets"] < limiar_flua_platelets:
+        score_flu_a += peso_forte 
+
+    if row["Monocytes"] > limiar_flub_mono:
+        score_flu_b += peso_padrao
+    if row["Red blood Cells"] < limiar_flub_rbc:
+        score_flu_b += peso_padrao
+
+    limiar_aprovacao = 2.0
+
+    if score_covid >= limiar_aprovacao:
         return "COVID-19"
-    elif score_flu_a >= 2:
+    elif score_flu_a >= limiar_aprovacao:
         return "Influenza A"
-    elif score_flu_b >= 2:
+    elif score_flu_b >= limiar_aprovacao:
         return "Influenza B"
     else:
         return "Saudável"
+
+
+def diagnosticar(dados_paciente):
+    """
+    Recebe um dicionário com exames laboratoriais,
+    aplica o mesmo scaler e retorna o diagnóstico.
+    """
+
+    entrada = pd.DataFrame([dados_paciente])
+
+    # Normaliza usando o MESMO scaler treinado
+    entrada[variaveis_laboratoriais] = scaler.transform(
+        entrada[variaveis_laboratoriais]
+    )
+
+    resultado = sistema_especialista(entrada.iloc[0])
+
+    return resultado
 
 
 df["Classe_real"] = df.apply(classe_real, axis=1)

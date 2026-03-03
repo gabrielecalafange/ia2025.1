@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sistema Especialista – Diagnóstico</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #e6f6fb, #f4fcff);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+
+  <!-- ================= APRESENTAÇÃO ================= -->
+
+  <main id="apresentacao" class="bg-white shadow-2xl rounded-2xl max-w-4xl w-full p-10 grid md:grid-cols-2 gap-10">
+
+    <section class="flex flex-col justify-center space-y-6">
+      <h1 class="text-4xl font-bold text-sky-700">
+        Sistema Especialista em Diagnóstico
+      </h1>
+
+      <p class="text-gray-600 text-lg leading-relaxed">
+        Sistema inteligente para auxiliar no diagnóstico com base
+        em exames laboratoriais.
+      </p>
+
+      <ul class="space-y-3">
+        <li class="flex items-center gap-3">
+          <span class="w-3 h-3 bg-sky-500 rounded-full"></span>
+          COVID-19
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="w-3 h-3 bg-sky-500 rounded-full"></span>
+          Influenza A
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="w-3 h-3 bg-sky-500 rounded-full"></span>
+          Influenza B
+        </li>
+      </ul>
+
+      <button
+        id="btnInicio"
+        class="mt-6 bg-sky-600 hover:bg-sky-700 text-white py-3 px-8 rounded-xl text-lg shadow-lg transition"
+      >
+        Iniciar Diagnóstico
+      </button>
+    </section>
+
+    <section class="flex items-center justify-center">
+      <div class="rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-200 p-10 shadow-xl w-full">
+        <h2 class="text-2xl font-semibold text-sky-800 mb-6">
+          Etapas do Sistema
+        </h2>
+
+        <div class="space-y-4">
+          <div class="bg-white p-4 rounded-xl shadow">
+            📊 Coleta de Exames
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow">
+            ⚙ Processamento e Normalização
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow">
+            🧠 Sistema Especialista
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow">
+            📈 Resultado ao Usuário
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FORMULÁRIO ================= -->
+
+  <section id="questionario" class="hidden max-w-4xl w-full mx-auto mt-10 bg-white p-8 rounded-2xl shadow-2xl">
+
+    <h2 class="text-2xl font-bold text-sky-700 mb-6">
+      Informe seus exames laboratoriais
+    </h2>
+
+    <form id="formExames" class="grid md:grid-cols-2 gap-4">
+
+      <input type="number" step="any" placeholder="Lactic Dehydrogenase" id="ldh" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="MCHC" id="mchc" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Proteína C Reativa (mg/dL)" id="pcr" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Leukocytes" id="leukocytes" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Lymphocytes" id="lymphocytes" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Platelets" id="platelets" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Monocytes" id="monocytes" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Neutrophils" id="neutrophils" class="p-3 border rounded-xl" required>
+      <input type="number" step="any" placeholder="Red Blood Cells" id="rbc" class="p-3 border rounded-xl" required>
+
+      <button type="submit" class="md:col-span-2 mt-6 bg-sky-600 hover:bg-sky-700 text-white py-3 px-6 rounded-xl">
+        Ver Diagnóstico
+      </button>
+    </form>
+
+    <div id="resultado" class="mt-6 text-lg font-semibold text-center"></div>
+
+  </section>
+
+  <!-- ================= SCRIPT ================= -->
+
+  <script>
+    const btnInicio = document.getElementById("btnInicio");
+    const apresentacao = document.getElementById("apresentacao");
+    const questionario = document.getElementById("questionario");
+    const form = document.getElementById("formExames");
+    const resultado = document.getElementById("resultado");
+
+    btnInicio.addEventListener("click", () => {
+      apresentacao.classList.add("hidden");
+      questionario.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      resultado.textContent = "Processando...";
+      resultado.className = "mt-6 text-lg font-semibold text-center text-gray-600";
+
+      const dados = {
+        "Lactic Dehydrogenase": parseFloat(document.getElementById("ldh").value),
+        "Mean corpuscular hemoglobin concentration (MCHC)": parseFloat(document.getElementById("mchc").value),
+        "Proteina C reativa mg/dL": parseFloat(document.getElementById("pcr").value),
+        "Leukocytes": parseFloat(document.getElementById("leukocytes").value),
+        "Lymphocytes": parseFloat(document.getElementById("lymphocytes").value),
+        "Platelets": parseFloat(document.getElementById("platelets").value),
+        "Monocytes": parseFloat(document.getElementById("monocytes").value),
+        "Neutrophils": parseFloat(document.getElementById("neutrophils").value),
+        "Red blood Cells": parseFloat(document.getElementById("rbc").value)
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/diagnostico", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dados)
+        });
+
+        const data = await response.json();
+
+        let cor = "text-green-600";
+
+        if (data.diagnostico === "COVID-19") {
+          cor = "text-red-600";
+        } else if (data.diagnostico === "Influenza A" || data.diagnostico === "Influenza B") {
+          cor = "text-yellow-600";
+        }
+
+        resultado.className = `mt-6 text-xl font-bold text-center ${cor}`;
+        resultado.textContent = "Diagnóstico: " + data.diagnostico;
+
+      } catch (error) {
+        resultado.className = "mt-6 text-lg font-semibold text-center text-red-600";
+        resultado.textContent = "Erro ao conectar com o servidor.";
+      }
+    });
+  </script>
+
+</body>
+</html>
