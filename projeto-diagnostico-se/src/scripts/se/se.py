@@ -21,29 +21,50 @@ THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parents[3]  # projeto-diagnostico-se/
 DATA_PATH = PROJECT_ROOT / "data" / "dataset_filtrado.csv"
 
-OUT_PDF = PROJECT_ROOT / "relatorio_validacao_se.pdf"
+OUT_PDF = PROJECT_ROOT / "src" / "scripts" / "se" / "relatorio_validacao_se.pdf"
 
 
 # =========================
 # Helpers de plot
 # =========================
+
 def plot_cm(cm_data, labels, title, fmt_int=True, vmin=None, vmax=None, log_scale=False):
+    n = len(labels)
     fig, ax = plt.subplots(figsize=(9, 7))
 
+    # Use pcolormesh instead of imshow — draws clean cell boundaries naturally
     if log_scale:
-        # LogNorm não aceita 0; usamos vmin>=1 para a escala de cor
-        norm = mcolors.LogNorm(vmin=max(float(np.min(cm_data)), 1.0), vmax=float(np.max(cm_data)))
-        im = ax.imshow(cm_data, cmap="Blues", norm=norm)
+        # Mask zeros so LogNorm doesn't break; display them as the minimum color
+        data_plot = np.where(cm_data == 0, np.nan, cm_data.astype(float))
+        norm = mcolors.LogNorm(
+            vmin=max(float(np.nanmin(data_plot[~np.isnan(data_plot)])), 1.0),
+            vmax=float(np.nanmax(cm_data))
+        )
+        cmap = plt.cm.Blues.copy()
+        cmap.set_bad(color="#e8f0f7")   # zeros get lightest blue
+        im = ax.pcolormesh(data_plot, cmap=cmap, norm=norm, edgecolors="white", linewidth=2)
         cbar_label = "Contagem (escala log)"
     else:
-        im = ax.imshow(cm_data, cmap="Blues", vmin=vmin, vmax=vmax)
+        im = ax.pcolormesh(
+            cm_data.astype(float),
+            cmap="Blues",
+            vmin=vmin if vmin is not None else 0,
+            vmax=vmax if vmax is not None else 1,
+            edgecolors="white",
+            linewidth=2
+        )
         cbar_label = "Proporção (recall)"
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label(cbar_label, fontsize=10)
 
-    ax.set_xticks(np.arange(len(labels)))
-    ax.set_yticks(np.arange(len(labels)))
+    # pcolormesh origin is bottom-left, so we flip the y-axis to match
+    # matrix convention (row 0 at top)
+    ax.invert_yaxis()
+
+    # Center ticks on each cell
+    ax.set_xticks(np.arange(n) + 0.5)
+    ax.set_yticks(np.arange(n) + 0.5)
     ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=11)
     ax.set_yticklabels(labels, fontsize=11)
 
@@ -51,21 +72,19 @@ def plot_cm(cm_data, labels, title, fmt_int=True, vmin=None, vmax=None, log_scal
     ax.set_ylabel("Verdadeiro", fontsize=12, labelpad=8)
     ax.set_title(title, fontsize=13, pad=14)
 
-    # grade fina entre células
-    ax.set_xticks(np.arange(len(labels)) - 0.5, minor=True)
-    ax.set_yticks(np.arange(len(labels)) - 0.5, minor=True)
-    ax.grid(which="minor", color="white", linewidth=1.5)
-    ax.tick_params(which="minor", bottom=False, left=False)
+    # Remove outer spines for a cleaner look
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
-    # anotações
-    thresh = float(np.max(cm_data)) / 2.0 if np.max(cm_data) else 0.0
-    for i in range(cm_data.shape[0]):
-        for j in range(cm_data.shape[1]):
+    # Annotations — centered in each cell
+    thresh = float(np.nanmax(cm_data)) / 2.0 if np.nanmax(cm_data) else 0.0
+    for i in range(n):
+        for j in range(n):
             val = cm_data[i, j]
             txt = f"{int(val)}" if fmt_int else f"{val:.2%}"
             color = "white" if val > thresh else "black"
             ax.text(
-                j, i, txt,
+                j + 0.5, i + 0.5, txt,
                 ha="center", va="center",
                 fontsize=12, fontweight="bold",
                 color=color
@@ -73,7 +92,6 @@ def plot_cm(cm_data, labels, title, fmt_int=True, vmin=None, vmax=None, log_scal
 
     fig.tight_layout()
     return fig
-
 
 def plot_report_table(report_dict, labels):
     rows = []
@@ -276,16 +294,16 @@ def sistema_especialista(row):
     limiar_covid_ldh = 0.5
     limiar_covid_pcr = 0.5
     limiar_covid_neutrophils = 0.5
-    
+
     limiar_flua_leuko = -0.5
     limiar_flua_lympho = -0.5
     limiar_flua_platelets = -0.5
-    
+
     limiar_flub_mono = 0.5
     limiar_flub_rbc = -0.5
 
     peso_padrao = 1.0
-    peso_forte = 1.5 
+    peso_forte = 1.5
 
     if row["Lactic Dehydrogenase"] > limiar_covid_ldh:
         score_covid += peso_padrao
@@ -299,7 +317,7 @@ def sistema_especialista(row):
     if row["Lymphocytes"] < limiar_flua_lympho:
         score_flu_a += peso_padrao
     if row["Platelets"] < limiar_flua_platelets:
-        score_flu_a += peso_forte 
+        score_flu_a += peso_forte
 
     if row["Monocytes"] > limiar_flub_mono:
         score_flu_b += peso_padrao
