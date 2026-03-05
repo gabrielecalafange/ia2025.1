@@ -1,4 +1,0 @@
-scholarly
-requests
-bs4
-urljoin

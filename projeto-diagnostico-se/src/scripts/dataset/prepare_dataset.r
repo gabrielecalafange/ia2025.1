@@ -1,11 +1,11 @@
 library(dplyr)
 library(tidyr)
 
-caminho_arquivo <- "/home/dell/ia-2026.1/ia2025.1/projeto-diagnostico-se/data/dataset_completo.csv"
+caminho_arquivo <- "/home/ramoni/Desktop/ia/ia-2025.2/ia2025.1/projeto-diagnostico-se/data/dataset_completo.csv"
 
 df <- read.csv(caminho_arquivo, 
                stringsAsFactors = FALSE, 
-               check.names = FALSE,
+               check.names = FALSE, 
                na.strings = c("", "NA", "NULL"))
 
 colunas_exames <- c(
@@ -23,6 +23,11 @@ colunas_exames <- c(
 df_final <- df %>%
   select(any_of(c("Patient ID", "SARS-Cov-2 exam result", "Influenza A, rapid test", "Influenza B, rapid test", colunas_exames)))
 
-cat("Processamento concluído. Registros capturados:", nrow(df_final), "\n")
+total_positivos <- sum(df_final$`SARS-Cov-2 exam result` == "positive", na.rm = TRUE)
 
-write.csv(df_final, "/home/dell/ia-2026.1/ia2025.1/projeto-diagnostico-se/data/dataset_filtrado.csv", row.names = FALSE)
+cat("Total de registros com dados completos encontrados:", nrow(df_final), "\n")
+cat("Total de pacientes com COVID-19 positivo:", total_positivos, "\n")
+
+View(df_final)
+
+write.csv(df_final, "/home/ramoni/Desktop/ia/ia-2025.2/ia2025.1/projeto-diagnostico-se/data/dataset_filtrado.csv")
